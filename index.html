@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#092b40">
+  <title>斌车 · 蓝牙遥控</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <header>
+      <div><span class="eyebrow">BLE CONTROLLER</span><h1>斌车遥控</h1></div>
+      <button id="connect" class="connect">连接蓝牙</button>
+    </header>
+    <div class="status"><span id="dot" class="dot"></span><span id="status">未连接</span></div>
+    <section class="controller">
+      <div class="pad-area">
+        <div class="caption">方向摇杆 <span>松开停车</span></div>
+        <div id="pad" class="pad" aria-label="方向摇杆">
+          <span class="arrow up">▲</span><span class="arrow down">▼</span>
+          <span class="arrow left">◀</span><span class="arrow right">▶</span>
+          <div id="knob" class="knob"></div>
+        </div>
+        <div id="direction" class="hint">等待操作</div>
+      </div>
+      <div class="buttons-area">
+        <div class="caption">小车控制 <span>按一下切换</span></div>
+        <div class="buttons">
+          <button data-key="0"><strong>A</strong><small>加速 10%</small></button>
+          <button data-key="1"><strong>B</strong><small>减速 10%</small></button>
+          <button data-key="2"><strong>C</strong><small>超声波模式</small></button>
+          <button data-key="3"><strong>D</strong><small>循迹模式</small></button>
+        </div>
+        <button id="stop" class="stop">立即停车</button>
+      </div>
+    </section>
+    <p class="foot">连接后先松开摇杆，再操作。模式 2 和 3 暂未启用。</p>
+    <p id="notice" class="notice" role="status"></p>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
+
