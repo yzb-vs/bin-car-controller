@@ -116,7 +116,15 @@ connect.addEventListener('click', async () => {
     submit('stop');
     timer = setInterval(() => submit('tick'), PERIOD_MS);
   } catch (error) {
-    notice('连接失败：' + (error.message || error) + '。请确认选择的是斌车的 BLE 设备。');
+    const detail = String(error.message || error);
+    if (error.name === 'NotSupportedError' || /not supported on this platform/i.test(detail))
+      notice('当前浏览器不支持网页蓝牙。请复制网址，用安卓手机的 Google Chrome 浏览器打开后重试。');
+    else if (error.name === 'NotFoundError' && !device)
+      notice('没有选择蓝牙设备。请确认小车已上电，再点击连接并选择“斌车”。');
+    else if (error.name === 'NotFoundError')
+      notice('设备已选中，但没有找到默认蓝牙服务。请确认选择的是斌车的 BLE 设备。');
+    else
+      notice('蓝牙连接失败：' + detail + '。请先关闭创趣蓝牙，再选择斌车的 BLE 设备。');
     disconnect();
   }
 });
