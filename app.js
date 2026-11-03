@@ -104,7 +104,12 @@ connect.addEventListener('click', async () => {
     status('正在连接…');
     const server = await device.gatt.connect();
     const service = await server.getPrimaryService(SERVICE);
-    characteristic = await service.getCharacteristic(CHARACTERISTIC);
+    try {
+      characteristic = await service.getCharacteristic(CHARACTERISTIC);
+      if (!characteristic.properties.write && !characteristic.properties.writeWithoutResponse)
+        characteristic = null;
+    } catch (_) { characteristic = null; }
+    if (!characteristic) characteristic = await service.getCharacteristic(0xfff3);
     resetInput(); pending = []; generation++;
     connect.textContent = '断开连接'; connect.disabled = false;
     status('已连接 · ' + (device.name || '蓝牙设备'), true);
