@@ -131,8 +131,12 @@ connect.addEventListener('click', async () => {
 function move(event) {
   if (event.pointerId !== padPointer || !characteristic) return;
   const r = pad.getBoundingClientRect();
-  let x = (event.clientX - (r.left + r.width / 2)) / (r.width * .34);
-  let y = (event.clientY - (r.top + r.height / 2)) / (r.height * .34);
+  // 竖持手机时画面旋转了90度，触摸坐标也要转换回摇杆坐标。
+  const rotated = window.matchMedia('(orientation: portrait)').matches;
+  let x = rotated ? (event.clientY - (r.top + r.height / 2)) / (r.height * .34)
+                  : (event.clientX - (r.left + r.width / 2)) / (r.width * .34);
+  let y = rotated ? -(event.clientX - (r.left + r.width / 2)) / (r.width * .34)
+                  : (event.clientY - (r.top + r.height / 2)) / (r.height * .34);
   const length = Math.hypot(x, y);
   if (length > 1) { x /= length; y /= length; }
   knob.style.transform = `translate(${x * r.width * .30}px,${y * r.height * .30}px)`;
