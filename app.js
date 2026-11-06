@@ -1,93 +1,74 @@
 'use strict';
 
-// KT6368A default BLE service/characteristic. Data matches bsp_cfun.c.
+// KT6368A default BLE service/characteristic. 08 工程的串口2每次接收一个数值命令。
 const SERVICE = 0xfff0;
 const CHARACTERISTIC = 0xfff1;
-const PERIOD_MS = 150;
+const STOP = 13;
 const $ = id => document.getElementById(id);
 const pad = $('pad'), knob = $('knob'), connect = $('connect');
-let device = null, characteristic = null, timer = null, writing = false;
-let pending = [], generation = 0, padPointer = null;
-let horizontal = 0, vertical = 0, keys = [0, 0, 0, 0];
-const activeButtons = new Map();
+let device = null, characteristic = null, generation = 0;
+let padPointer = null, direction = STOP, closing = false;
+let pending = [], sending = null;
+const labels = {1: '前进', 2: '后退', 9: '左转', 10: '右转', 13: '停车'};
 
 function status(message, connected = false) {
   $('status').textContent = message;
   $('dot').classList.toggle('on', connected);
 }
 function notice(message) { $('notice').textContent = message; }
-function packet() {
-  // Firmware maps its first axis to left/right and the negative second to up/down.
-  return new Uint8Array([0xdd, 0x77, horizontal & 255, vertical & 255, ...keys]);
-}
-function submit(kind = 'state') {
-  if (!characteristic) return;
-  const value = packet();
-  if (kind === 'stop') {
-    // A stop supersedes queued motion; no stale movement may follow it.
-    pending = [{value, kind}];
-  } else if (kind === 'tick') {
-    if (pending.length) return;
-    pending.push({value, kind});
-  } else {
-    if (pending.length >= 8) {
-      emergencyStop('发送繁忙，已停止，请重新连接。');
-      return;
-    }
-    pending.push({value, kind});
+// 每次只发一个字节。例如右转发 0x0A，不发文本“10”或旧版坐标包。
+function submit(command) {
+  if (!characteristic || closing) return;
+  if (command === STOP) pending = []; // 停车优先，取消还没发出的动作。
+  pending.push(command);
+  if (!sending) {
+    const session = generation;
+    sending = drain(session).finally(() => { if (session === generation) sending = null; });
   }
-  drain();
+  return sending;
 }
-async function drain() {
-  if (writing || !characteristic) return;
-  writing = true;
-  const session = generation;
+async function drain(session) {
   try {
-    while (pending.length && characteristic && session === generation) {
-      const item = pending.shift();
+    while (pending.length && session === generation) {
+      const data = Uint8Array.of(pending.shift());
       if (characteristic.properties.writeWithoutResponse)
-        await characteristic.writeValueWithoutResponse(item.value);
+        await characteristic.writeValueWithoutResponse(data);
       else
-        await characteristic.writeValueWithResponse(item.value);
+        await characteristic.writeValueWithResponse(data);
     }
   } catch (error) {
     if (session === generation) {
-      notice('蓝牙发送失败，小车应在超时后停车：' + (error.message || error));
+      notice('发送失败，请检查小车是否已停车。');
       disconnect();
     }
-  } finally {
-    writing = false;
-    if (pending.length && characteristic) drain();
   }
 }
 function resetInput() {
-  horizontal = 0; vertical = 0; keys = [0, 0, 0, 0];
-  activeButtons.clear(); padPointer = null;
+  direction = STOP; padPointer = null;
   knob.style.transform = '';
   $('direction').textContent = '已松开';
-}
-function stopMotion() {
-  horizontal = 0; vertical = 0; padPointer = null;
-  knob.style.transform = '';
-  $('direction').textContent = '已松开';
-  submit('stop');
 }
 function emergencyStop(message) {
   resetInput();
-  submit('stop');
   if (message) notice(message);
+  return submit(STOP);
 }
 function disconnect() {
-  generation++;
-  clearInterval(timer); timer = null;
-  pending = []; characteristic = null;
-  resetInput();
-  if (device && device.gatt.connected) device.gatt.disconnect();
-  device = null; connect.disabled = false; connect.textContent = '连接蓝牙';
+  generation++; pending = []; sending = null; characteristic = null;
+  closing = false; resetInput();
+  const old = device; device = null;
+  if (old && old.gatt.connected) old.gatt.disconnect();
+  connect.disabled = false; connect.textContent = '连接蓝牙';
   status('未连接');
 }
 connect.addEventListener('click', async () => {
-  if (characteristic) { emergencyStop(); disconnect(); return; }
+  if (characteristic) {
+    connect.disabled = true;
+    const stopped = emergencyStop();
+    closing = true;
+    await stopped; // 主动断开前，先等停车指令写完。
+    disconnect(); return;
+  }
   if (!window.isSecureContext || !navigator.bluetooth) {
     notice('请用安卓 Chrome 打开 HTTPS 网页，并开启蓝牙。');
     return;
@@ -97,8 +78,9 @@ connect.addEventListener('click', async () => {
     device = await navigator.bluetooth.requestDevice({
       acceptAllDevices: true, optionalServices: [SERVICE]
     });
-    device.addEventListener('gattserverdisconnected', () => {
-      notice('蓝牙已断开；请松开摇杆后重新连接。');
+    device.addEventListener('gattserverdisconnected', event => {
+      if (event.target !== device) return;
+      notice('蓝牙意外断开，请检查小车是否已停车。');
       disconnect();
     }, {once:true});
     status('正在连接…');
@@ -113,8 +95,7 @@ connect.addEventListener('click', async () => {
     resetInput(); pending = []; generation++;
     connect.textContent = '断开连接'; connect.disabled = false;
     status('已连接 · ' + (device.name || '蓝牙设备'), true);
-    submit('stop');
-    timer = setInterval(() => submit('tick'), PERIOD_MS);
+    submit(STOP);
   } catch (error) {
     const detail = String(error.message || error);
     if (error.name === 'NotSupportedError' || /not supported on this platform/i.test(detail))
@@ -137,35 +118,29 @@ function move(event) {
   const length = Math.hypot(x, y);
   if (length > 1) { x /= length; y /= length; }
   knob.style.transform = `translate(${x * r.width * .30}px,${y * r.height * .30}px)`;
-  horizontal = Math.round(x * 100);
-  vertical = Math.round(-y * 100);
-  $('direction').textContent = Math.hypot(x, y) < .25 ? '回中' : '控制中';
-  submit('tick');
+  // 模式1：按偏移较大的轴选四方向，中心留出死区防止误触。
+  const next = length < .25 ? STOP : Math.abs(y) >= Math.abs(x)
+    ? (y < 0 ? 1 : 2) : (x < 0 ? 9 : 10);
+  if (next === direction) return;
+  direction = next;
+  $('direction').textContent = labels[next];
+  submit(next);
 }
 pad.addEventListener('pointerdown', event => {
-  if (!characteristic || padPointer !== null) return;
+  if (!characteristic || closing || padPointer !== null) return;
   event.preventDefault(); padPointer = event.pointerId;
   pad.setPointerCapture(event.pointerId); move(event);
 });
 pad.addEventListener('pointermove', move);
 for (const eventName of ['pointerup', 'pointercancel', 'lostpointercapture'])
   pad.addEventListener(eventName, event => {
-    if (event.pointerId === padPointer) stopMotion();
+    if (event.pointerId === padPointer) emergencyStop();
   });
-document.querySelectorAll('[data-key]').forEach(button => {
-  const key = Number(button.dataset.key);
-  button.addEventListener('pointerdown', event => {
-    if (!characteristic || activeButtons.has(key)) return;
-    event.preventDefault(); activeButtons.set(key, event.pointerId);
-    button.setPointerCapture(event.pointerId); keys[key] = 1; submit();
-  });
-  for (const name of ['pointerup', 'pointercancel', 'lostpointercapture'])
-    button.addEventListener(name, event => {
-      if (activeButtons.get(key) !== event.pointerId) return;
-      activeButtons.delete(key); keys[key] = 0; submit();
-    });
+// 加减速每点一次只发送一次；松开按钮不改变摇杆方向。
+document.querySelectorAll('[data-command]').forEach(button => {
+  button.addEventListener('click', () => submit(Number(button.dataset.command)));
 });
-$('stop').addEventListener('click', () => emergencyStop('已发送停车指令。'));
+$('stop').addEventListener('click', () => emergencyStop());
 window.addEventListener('blur', () => { if (characteristic) emergencyStop(); });
 document.addEventListener('visibilitychange', () => {
   if (document.hidden && characteristic) emergencyStop();

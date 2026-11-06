@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#092b40">
   <title>斌车 · 蓝牙遥控</title>
-  <link rel="stylesheet" href="style.css?v=20261106-4">
+  <link rel="stylesheet" href="style.css?v=20261106-5">
 </head>
 <body>
   <div class="rotate-prompt" role="status"><div class="rotate-icon">↻</div><strong>请将手机横过来</strong><p>打开手机的自动旋转，横屏后显示控制面板。</p></div>
@@ -17,7 +17,7 @@
     <div class="status"><span id="dot" class="dot"></span><span id="status">未连接</span></div>
     <section class="controller">
       <div class="pad-area">
-        <div class="caption">方向摇杆 <span>松开停车</span></div>
+        <div class="caption">模式 1 · 方向摇杆 <span>松开停车</span></div>
         <div id="pad" class="pad" aria-label="方向摇杆">
           <span class="arrow up">▲</span><span class="arrow down">▼</span>
           <span class="arrow left">◀</span><span class="arrow right">▶</span>
@@ -41,13 +41,13 @@
           <button disabled><strong>04</strong><small>循迹</small></button>
           <button disabled><strong>05</strong><small>平移与原地旋转</small></button>
         </div>
-        <div class="speed-controls"><button data-key="1">− 减速</button><button data-key="0">＋ 加速</button></div>
+        <div class="speed-controls"><button data-command="16">− 减速</button><button data-command="15">＋ 加速</button></div>
         <button id="stop" class="stop">立即停车</button>
       </div>
     </section>
     <p class="foot">速度与温湿度等待小车回传；模式 2–5 待接入。</p>
     <p id="notice" class="notice" role="status"></p>
   </main>
-  <script src="app.js?v=20261106-4"></script>
+  <script src="app.js?v=20261106-5"></script>
 </body>
 </html>
