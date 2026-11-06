@@ -3,51 +3,48 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#092b40">
+  <meta name="theme-color" content="#102627">
   <title>斌车 · 蓝牙遥控</title>
-  <link rel="stylesheet" href="style.css?v=20261106-5">
+  <link rel="stylesheet" href="style.css?v=drive-7">
 </head>
 <body>
-  <div class="rotate-prompt" role="status"><div class="rotate-icon">↻</div><strong>请将手机横过来</strong><p>打开手机的自动旋转，横屏后显示控制面板。</p></div>
+  <div class="rotate-prompt"><b>↻</b><strong>请将手机横过来</strong><span>开启自动旋转，进入横屏驾驶台</span></div>
   <main>
     <header>
-      <div><span class="eyebrow">BLE CONTROLLER</span><h1>斌车遥控</h1></div>
-      <button id="connect" class="connect">连接蓝牙</button>
+      <h1>斌车<span>驾驶台</span></h1>
+      <div class="current" aria-label="当前模式：01 手动驾驶">当前模式 <strong>01 · 手动驾驶</strong></div>
+      <div class="status"><i id="dot"></i><span id="status">未连接</span></div>
+      <button id="fullscreen" hidden>全屏驾驶</button>
+      <button id="connect">连接蓝牙</button>
     </header>
-    <div class="status"><span id="dot" class="dot"></span><span id="status">未连接</span></div>
     <section class="controller">
-      <div class="pad-area">
-        <div class="caption">模式 1 · 方向摇杆 <span>松开停车</span></div>
-        <div id="pad" class="pad" aria-label="方向摇杆">
+      <section class="pad-area">
+        <h2>方向摇杆 <span id="direction">松开停车</span></h2>
+        <div class="well"><div id="pad" aria-label="四方向摇杆，松开停车">
           <span class="arrow up">▲</span><span class="arrow down">▼</span>
           <span class="arrow left">◀</span><span class="arrow right">▶</span>
-          <div id="knob" class="knob"></div>
+          <div id="knob"></div>
+        </div></div>
+      </section>
+      <section class="dashboard" aria-label="小车状态">
+        <div class="readout">
+          <h2>车辆状态 <span>等待回传</span></h2>
+          <div class="speed"><small>车速</small><strong>--</strong></div>
+          <div class="environment"><div><small>环境温度</small><b>-- <em>°C</em></b></div><div><small>环境湿度</small><b>-- <em>%</em></b></div></div>
         </div>
-        <div id="direction" class="hint">等待操作</div>
-      </div>
-      <div class="dashboard" aria-label="小车状态">
-        <div class="caption">车辆状态 <span>等待小车回传</span></div>
-        <div class="metric speed"><small>速度 / SPEED</small><strong>--</strong><span>暂无数据</span></div>
-        <div class="environment">
-          <div class="metric"><small>温度</small><strong>-- <em>°C</em></strong></div>
-          <div class="metric"><small>湿度</small><strong>-- <em>%</em></strong></div>
-        </div>
-      </div>
-      <div class="buttons-area">
-        <div class="caption">行驶模式 <span>功能待接入</span></div>
+      </section>
+      <section class="buttons-area">
+        <h2>行驶模式 <span>02–05 待接入</span></h2>
         <div class="buttons">
-          <button disabled><strong>02</strong><small>四方向斜行</small></button>
-          <button disabled><strong>03</strong><small>超声波</small></button>
-          <button disabled><strong>04</strong><small>循迹</small></button>
-          <button disabled><strong>05</strong><small>平移与原地旋转</small></button>
+          <button disabled><b>02</b>四方向斜行</button><button disabled><b>03</b>超声波</button>
+          <button disabled><b>04</b>循迹</button><button disabled><b>05</b>平移与旋转</button>
         </div>
         <div class="speed-controls"><button data-command="16">− 减速</button><button data-command="15">＋ 加速</button></div>
-        <button id="stop" class="stop">立即停车</button>
-      </div>
+        <button id="stop"><i></i>立即停车</button>
+      </section>
     </section>
-    <p class="foot">速度与温湿度等待小车回传；模式 2–5 待接入。</p>
-    <p id="notice" class="notice" role="status"></p>
+    <p id="notice" role="status"></p>
   </main>
-  <script src="app.js?v=20261106-5"></script>
+  <script src="app.js?v=drive-7"></script>
 </body>
 </html>

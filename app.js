@@ -45,6 +45,7 @@ async function drain(session) {
 }
 function resetInput() {
   direction = STOP; padPointer = null;
+  delete pad.dataset.direction;
   knob.style.transform = '';
   $('direction').textContent = '已松开';
 }
@@ -123,6 +124,7 @@ function move(event) {
     ? (y < 0 ? 1 : 2) : (x < 0 ? 9 : 10);
   if (next === direction) return;
   direction = next;
+  pad.dataset.direction = next;
   $('direction').textContent = labels[next];
   submit(next);
 }
@@ -148,3 +150,18 @@ document.addEventListener('visibilitychange', () => {
 if (!window.isSecureContext || !navigator.bluetooth)
   notice('蓝牙控制需要安卓 Chrome 和 HTTPS 地址。');
 
+
+// 有全屏能力的浏览器才显示按钮，退出全屏后同步更新文字。
+const full = $('fullscreen');
+if (document.fullscreenEnabled) {
+  full.hidden = false;
+  full.addEventListener('click', async () => {
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await document.documentElement.requestFullscreen();
+    } catch (_) { notice('浏览器未进入全屏，仍可横屏驾驶。'); }
+  });
+  document.addEventListener('fullscreenchange', () => {
+    full.textContent = document.fullscreenElement ? '退出全屏' : '全屏驾驶';
+  });
+}
