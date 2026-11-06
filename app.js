@@ -19,7 +19,7 @@ function notice(message) { $('notice').textContent = message; }
 // 每次只发一个字节。例如右转发 0x0A，不发文本“10”或旧版坐标包。
 function submit(command) {
   if (!characteristic || closing) return;
-  if (command === STOP) pending = []; // 停车优先，取消还没发出的动作。
+  if (command === STOP || command === 14) pending = []; // 停车优先，取消还没发出的动作。
   pending.push(command);
   if (!sending) {
     const session = generation;
@@ -49,10 +49,10 @@ function resetInput() {
   knob.style.transform = '';
   $('direction').textContent = '已松开';
 }
-function emergencyStop(message) {
+function emergencyStop(message, command = STOP) {
   resetInput();
   if (message) notice(message);
-  return submit(STOP);
+  return submit(command);
 }
 function disconnect() {
   generation++; pending = []; sending = null; characteristic = null;
@@ -143,6 +143,7 @@ document.querySelectorAll('[data-command]').forEach(button => {
   button.addEventListener('click', () => submit(Number(button.dataset.command)));
 });
 $('stop').addEventListener('click', () => emergencyStop());
+$('brake').addEventListener('click', () => emergencyStop('', 14));
 window.addEventListener('blur', () => { if (characteristic) emergencyStop(); });
 document.addEventListener('visibilitychange', () => {
   if (document.hidden && characteristic) emergencyStop();

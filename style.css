@@ -25,3 +25,5 @@ h2{justify-content:space-between;gap:4px;font-size:clamp(12px,1.65vw,17px);line-
 #pad[data-direction="1"] .up,#pad[data-direction="2"] .down,#pad[data-direction="9"] .left,#pad[data-direction="10"] .right{color:#afffce;text-shadow:0 0 8px #85ffc3}
 #notice:not(:empty){position:fixed;top:52px;left:39%;width:27%;z-index:1;pointer-events:none}
 @media(max-width:690px){header{gap:6px;padding-left:6px}.current{padding-left:6px;gap:4px}h1 span{display:none}}
+
+.stop-controls{display:flex;gap:5px;min-height:0}.stop-controls button{flex:1}#brake{background:#f6d795;color:#352716;font-weight:750}#stop{width:auto}
