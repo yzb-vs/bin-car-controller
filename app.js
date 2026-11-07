@@ -49,7 +49,7 @@ function resetInput() {
   direction = STOP; padPointer = null; motionPointer = null;
   delete pad.dataset.direction;
   knob.style.transform = '';
-  $('direction').textContent = mode === 5 ? '按住运动 · 松开刹车' : '已松开';
+  $('direction').textContent = mode !== 1 ? '按住运动 · 松开刹车' : '已松开';
 }
 function emergencyStop(message, command = STOP) {
   resetInput();
@@ -150,14 +150,15 @@ function selectMode(nextMode) {
   if (mode === nextMode) return;
   emergencyStop();
   mode = nextMode;
-  $('control-title').textContent = mode === 5 ? '方向按钮' : '方向摇杆';
-  $('direction').textContent = mode === 5 ? '按住运动 · 松开刹车' : '已松开';
+  $('control-title').textContent = mode !== 1 ? '方向按钮' : '方向摇杆';
+  $('direction').textContent = mode !== 1 ? '按住运动 · 松开刹车' : '已松开';
   $('current-mode').textContent = {1:'01 · 手动驾驶', 2:'02 · 四方向斜行', 5:'05 · 平移与旋转'}[mode];
   $('mode1').setAttribute('aria-pressed', String(mode === 1));
   $('mode2').setAttribute('aria-pressed', String(mode === 2));
   $('mode5').setAttribute('aria-pressed', String(mode === 5));
   pad.dataset.mode = String(mode);
-  pad.hidden = mode === 5;
+  pad.hidden = mode !== 1;
+  $('mode2-controls').hidden = mode !== 2;
   $('mode5-controls').hidden = mode !== 5;
   const arrows = mode === 2 ? ['↖', '↘', '↙', '↗'] : mode === 5 ? ['↺', '↻', '◀', '▶'] : ['▲', '▼', '◀', '▶'];
   pad.querySelectorAll('.arrow').forEach((arrow, i) => { arrow.textContent = arrows[i]; });
@@ -165,10 +166,10 @@ function selectMode(nextMode) {
 $('mode1').addEventListener('click', () => selectMode(1));
 $('mode2').addEventListener('click', () => selectMode(2));
 $('mode5').addEventListener('click', () => selectMode(5));
-// 模式5按住运动，松开、触摸取消或失去捕获时发送刹车。
+// 模式2和5按住运动，松开、触摸取消或失去捕获时发送刹车。
 document.querySelectorAll('[data-motion]').forEach(button => {
   button.addEventListener('pointerdown', event => {
-    if (mode !== 5 || !characteristic || closing || motionPointer !== null) return;
+    if (mode === 1 || !characteristic || closing || motionPointer !== null) return;
     event.preventDefault();
     motionPointer = event.pointerId;
     button.setPointerCapture(event.pointerId);
