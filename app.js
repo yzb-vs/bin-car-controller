@@ -143,7 +143,7 @@ pad.addEventListener('pointerdown', event => {
 pad.addEventListener('pointermove', move);
 for (const eventName of ['pointerup', 'pointercancel', 'lostpointercapture'])
   pad.addEventListener(eventName, event => {
-    if (event.pointerId === padPointer) emergencyStop();
+    if (event.pointerId === padPointer) emergencyStop('', 14);
   });
 // 切换模式先停车并释放摇杆，避免旧方向延续到新模式。
 function selectMode(nextMode) {
