@@ -16,7 +16,7 @@ function status(message, connected = false) {
   $('dot').classList.toggle('on', connected);
 }
 function notice(message) { $('notice').textContent = message; }
-// 每次只发一个字节。例如右转发 0x0A，不发文本“10”或旧版坐标包。
+// 控制帧：AA 55、类型01、长度01、命令、异或校验。
 function submit(command) {
   if (!characteristic || closing) return;
   if (command === STOP || command === 14) pending = []; // 停车优先，取消还没发出的动作。
@@ -30,7 +30,9 @@ function submit(command) {
 async function drain(session) {
   try {
     while (pending.length && session === generation) {
-      const data = Uint8Array.of(pending.shift());
+      const command = pending.shift();
+      const type = 0x01, length = 0x01;
+      const data = Uint8Array.of(0xaa, 0x55, type, length, command, type ^ length ^ command);
       if (characteristic.properties.writeWithoutResponse)
         await characteristic.writeValueWithoutResponse(data);
       else
