@@ -5,26 +5,31 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#102627">
   <title>斌车 · 蓝牙遥控</title>
-  <link rel="stylesheet" href="style.css?v=drive-8">
+  <link rel="stylesheet" href="style.css?v=mode25-1">
 </head>
 <body>
   <div class="rotate-prompt"><b>↻</b><strong>请将手机横过来</strong><span>开启自动旋转，进入横屏驾驶台</span></div>
   <main>
     <header>
       <h1>斌车<span>驾驶台</span></h1>
-      <div class="current" aria-label="当前模式：01 手动驾驶">当前模式 <strong>01 · 手动驾驶</strong></div>
+      <div class="current" aria-label="当前模式"><span>当前模式</span> <strong id="current-mode">01 · 手动驾驶</strong></div>
       <div class="status"><i id="dot"></i><span id="status">未连接</span></div>
       <button id="fullscreen" hidden>全屏驾驶</button>
       <button id="connect">连接蓝牙</button>
     </header>
     <section class="controller">
       <section class="pad-area">
-        <h2>方向摇杆 <span id="direction">松开停车</span></h2>
+        <h2><span id="control-title">方向摇杆</span><span id="direction">松开停车</span></h2>
         <div class="well"><div id="pad" aria-label="四方向摇杆，松开停车">
           <span class="arrow up">▲</span><span class="arrow down">▼</span>
           <span class="arrow left">◀</span><span class="arrow right">▶</span>
           <div id="knob"></div>
-        </div></div>
+        </div>
+          <div id="mode5-controls" class="mode5-controls" aria-label="按住运动，松开刹车" hidden>
+            <button data-motion="11">↺ 左旋</button><button data-motion="12">↻ 右旋</button>
+            <button data-motion="3">← 左平移</button><button data-motion="4">右平移 →</button>
+          </div>
+        </div>
       </section>
       <section class="dashboard" aria-label="小车状态">
         <div class="readout">
@@ -34,17 +39,18 @@
         </div>
       </section>
       <section class="buttons-area">
-        <h2>行驶模式 <span>02–05 待接入</span></h2>
+        <h2>行驶模式 <span>03–04 待接入</span></h2>
         <div class="buttons">
-          <button disabled><b>02</b>四方向斜行</button><button disabled><b>03</b>超声波</button>
-          <button disabled><b>04</b>循迹</button><button disabled><b>05</b>平移与旋转</button>
+          <button id="mode2" type="button" aria-pressed="false"><b>02</b>四方向斜行</button><button disabled><b>03</b>超声波</button>
+          <button disabled><b>04</b>循迹</button><button id="mode5" type="button" aria-pressed="false"><b>05</b>平移与旋转</button>
         </div>
+        <button id="mode1" class="mode1" type="button" aria-pressed="true">01 · 手动驾驶</button>
         <div class="speed-controls"><button data-command="16">− 减速</button><button data-command="15">＋ 加速</button></div>
         <div class="stop-controls"><button id="brake">刹车</button><button id="stop"><i></i>停车</button></div>
       </section>
     </section>
     <p id="notice" role="status"></p>
   </main>
-  <script src="app.js?v=aa55-1"></script>
+  <script src="app.js?v=mode25-1"></script>
 </body>
 </html>

@@ -7,9 +7,9 @@ const STOP = 13;
 const $ = id => document.getElementById(id);
 const pad = $('pad'), knob = $('knob'), connect = $('connect');
 let device = null, characteristic = null, generation = 0;
-let padPointer = null, direction = STOP, closing = false;
-let pending = [], sending = null;
-const labels = {1: '前进', 2: '后退', 9: '左转', 10: '右转', 13: '停车'};
+let padPointer = null, motionPointer = null, direction = STOP, closing = false;
+let pending = [], sending = null, mode = 1;
+const labels = {1: '前进', 2: '后退', 3: '左平移', 4: '右平移', 11: '原地左旋', 12: '原地右旋', 5: '左前斜行', 6: '右前斜行', 7: '左后斜行', 8: '右后斜行', 9: '左转', 10: '右转', 13: '停车'};
 
 function status(message, connected = false) {
   $('status').textContent = message;
@@ -46,10 +46,10 @@ async function drain(session) {
   }
 }
 function resetInput() {
-  direction = STOP; padPointer = null;
+  direction = STOP; padPointer = null; motionPointer = null;
   delete pad.dataset.direction;
   knob.style.transform = '';
-  $('direction').textContent = '已松开';
+  $('direction').textContent = mode === 5 ? '按住运动 · 松开刹车' : '已松开';
 }
 function emergencyStop(message, command = STOP) {
   resetInput();
@@ -121,9 +121,14 @@ function move(event) {
   const length = Math.hypot(x, y);
   if (length > 1) { x /= length; y /= length; }
   knob.style.transform = `translate(${x * r.width * .30}px,${y * r.height * .30}px)`;
-  // 模式1：按偏移较大的轴选四方向，中心留出死区防止误触。
-  const next = length < .25 ? STOP : Math.abs(y) >= Math.abs(x)
-    ? (y < 0 ? 1 : 2) : (x < 0 ? 9 : 10);
+  // 模式1控制四方向；模式2需要同时向水平和垂直方向推动。
+  let next = STOP;
+  if (mode === 1 && length >= .25)
+    next = Math.abs(y) >= Math.abs(x) ? (y < 0 ? 1 : 2) : (x < 0 ? 9 : 10);
+  else if (mode === 2 && Math.abs(x) >= .18 && Math.abs(y) >= .18)
+    next = y < 0 ? (x < 0 ? 5 : 6) : (x < 0 ? 7 : 8);
+  else if (mode === 5 && length >= .25)
+    next = Math.abs(y) >= Math.abs(x) ? (y < 0 ? 11 : 12) : (x < 0 ? 3 : 4);
   if (next === direction) return;
   direction = next;
   pad.dataset.direction = next;
@@ -140,6 +145,42 @@ for (const eventName of ['pointerup', 'pointercancel', 'lostpointercapture'])
   pad.addEventListener(eventName, event => {
     if (event.pointerId === padPointer) emergencyStop();
   });
+// 切换模式先停车并释放摇杆，避免旧方向延续到新模式。
+function selectMode(nextMode) {
+  if (mode === nextMode) return;
+  emergencyStop();
+  mode = nextMode;
+  $('control-title').textContent = mode === 5 ? '方向按钮' : '方向摇杆';
+  $('direction').textContent = mode === 5 ? '按住运动 · 松开刹车' : '已松开';
+  $('current-mode').textContent = {1:'01 · 手动驾驶', 2:'02 · 四方向斜行', 5:'05 · 平移与旋转'}[mode];
+  $('mode1').setAttribute('aria-pressed', String(mode === 1));
+  $('mode2').setAttribute('aria-pressed', String(mode === 2));
+  $('mode5').setAttribute('aria-pressed', String(mode === 5));
+  pad.dataset.mode = String(mode);
+  pad.hidden = mode === 5;
+  $('mode5-controls').hidden = mode !== 5;
+  const arrows = mode === 2 ? ['↖', '↘', '↙', '↗'] : mode === 5 ? ['↺', '↻', '◀', '▶'] : ['▲', '▼', '◀', '▶'];
+  pad.querySelectorAll('.arrow').forEach((arrow, i) => { arrow.textContent = arrows[i]; });
+}
+$('mode1').addEventListener('click', () => selectMode(1));
+$('mode2').addEventListener('click', () => selectMode(2));
+$('mode5').addEventListener('click', () => selectMode(5));
+// 模式5按住运动，松开、触摸取消或失去捕获时发送刹车。
+document.querySelectorAll('[data-motion]').forEach(button => {
+  button.addEventListener('pointerdown', event => {
+    if (mode !== 5 || !characteristic || closing || motionPointer !== null) return;
+    event.preventDefault();
+    motionPointer = event.pointerId;
+    button.setPointerCapture(event.pointerId);
+    const command = Number(button.dataset.motion);
+    $('direction').textContent = labels[command];
+    submit(command);
+  });
+  for (const name of ['pointerup', 'pointercancel', 'lostpointercapture'])
+    button.addEventListener(name, event => {
+      if (event.pointerId === motionPointer) emergencyStop('', 14);
+    });
+});
 // 加减速每点一次只发送一次；松开按钮不改变摇杆方向。
 document.querySelectorAll('[data-command]').forEach(button => {
   button.addEventListener('click', () => submit(Number(button.dataset.command)));
