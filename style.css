@@ -49,3 +49,9 @@ h2{justify-content:space-between;gap:4px;font-size:clamp(12px,1.65vw,17px);line-
 .mode5-controls button:active{background:#438b75}
 
 #control-title{font-size:inherit;font-weight:700;color:inherit}
+
+/* 循迹由明确的启动按钮触发，停车与刹车仍在右侧。 */
+#mode4[aria-pressed="true"]{border-color:#a6f6d1;background:#336e5c;color:#fff}
+.line-controls{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center}
+.line-controls span,.line-controls small{font-size:clamp(11px,1.45vw,14px);color:#d0e7df}
+#line-start{width:80%;min-height:44px;background:#9de4c2;color:#103a2d;font-weight:750}

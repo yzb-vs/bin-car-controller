@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#102627">
   <title>斌车 · 蓝牙遥控</title>
-  <link rel="stylesheet" href="style.css?v=mode25-3">
+  <link rel="stylesheet" href="style.css?v=line04-1">
 </head>
 <body>
   <div class="rotate-prompt"><b>↻</b><strong>请将手机横过来</strong><span>开启自动旋转，进入横屏驾驶台</span></div>
@@ -29,6 +29,11 @@
             <button data-motion="5">↖ 左前</button><button data-motion="6">↗ 右前</button>
             <button data-motion="7">↙ 左后</button><button data-motion="8">↘ 右后</button>
           </div>
+          <div id="mode4-controls" class="line-controls" hidden>
+            <span>按下启动后小车自动循迹</span>
+            <button id="line-start" type="button">启动循迹</button>
+            <small>停车或刹车将退出循迹</small>
+          </div>
           <div id="mode5-controls" class="mode5-controls" aria-label="按住运动，松开刹车" hidden>
             <button data-motion="11">↺ 左旋</button><button data-motion="12">↻ 右旋</button>
             <button data-motion="3">← 左平移</button><button data-motion="4">右平移 →</button>
@@ -43,10 +48,10 @@
         </div>
       </section>
       <section class="buttons-area">
-        <h2>行驶模式 <span>03–04 待接入</span></h2>
+        <h2>行驶模式 <span>03 待接入</span></h2>
         <div class="buttons">
           <button id="mode2" type="button" aria-pressed="false"><b>02</b>四方向斜行</button><button disabled><b>03</b>超声波</button>
-          <button disabled><b>04</b>循迹</button><button id="mode5" type="button" aria-pressed="false"><b>05</b>平移与旋转</button>
+          <button id="mode4" type="button" aria-pressed="false"><b>04</b>循迹</button><button id="mode5" type="button" aria-pressed="false"><b>05</b>平移与旋转</button>
         </div>
         <button id="mode1" class="mode1" type="button" aria-pressed="true">01 · 手动驾驶</button>
         <div class="speed-controls"><button data-command="16">− 减速</button><button data-command="15">＋ 加速</button></div>
@@ -55,6 +60,6 @@
     </section>
     <p id="notice" role="status"></p>
   </main>
-  <script src="app.js?v=mode25-3"></script>
+  <script src="app.js?v=line04-1"></script>
 </body>
 </html>

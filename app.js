@@ -3,7 +3,7 @@
 // KT6368A default BLE service/characteristic. 08 工程的串口2每次接收一个数值命令。
 const SERVICE = 0xfff0;
 const CHARACTERISTIC = 0xfff1;
-const STOP = 13;
+const STOP = 13, LINE_START = 17;
 const $ = id => document.getElementById(id);
 const pad = $('pad'), knob = $('knob'), connect = $('connect');
 let device = null, characteristic = null, generation = 0;
@@ -49,7 +49,7 @@ function resetInput() {
   direction = STOP; padPointer = null; motionPointer = null;
   delete pad.dataset.direction;
   knob.style.transform = '';
-  $('direction').textContent = mode !== 1 ? '按住运动 · 松开刹车' : '已松开';
+  $('direction').textContent = mode === 4 ? '等待启动' : mode !== 1 ? '按住运动 · 松开刹车' : '已松开';
 }
 function emergencyStop(message, command = STOP) {
   resetInput();
@@ -150,26 +150,35 @@ function selectMode(nextMode) {
   if (mode === nextMode) return;
   emergencyStop();
   mode = nextMode;
-  $('control-title').textContent = mode !== 1 ? '方向按钮' : '方向摇杆';
-  $('direction').textContent = mode !== 1 ? '按住运动 · 松开刹车' : '已松开';
-  $('current-mode').textContent = {1:'01 · 手动驾驶', 2:'02 · 四方向斜行', 5:'05 · 平移与旋转'}[mode];
+  $('control-title').textContent = mode === 4 ? '循迹控制' : mode !== 1 ? '方向按钮' : '方向摇杆';
+  $('direction').textContent = mode === 4 ? '等待启动' : mode !== 1 ? '按住运动 · 松开刹车' : '已松开';
+  $('current-mode').textContent = {1:'01 · 手动驾驶', 2:'02 · 四方向斜行', 4:'04 · 循迹', 5:'05 · 平移与旋转'}[mode];
   $('mode1').setAttribute('aria-pressed', String(mode === 1));
   $('mode2').setAttribute('aria-pressed', String(mode === 2));
   $('mode5').setAttribute('aria-pressed', String(mode === 5));
+  $('mode4').setAttribute('aria-pressed', String(mode === 4));
   pad.dataset.mode = String(mode);
   pad.hidden = mode !== 1;
   $('mode2-controls').hidden = mode !== 2;
   $('mode5-controls').hidden = mode !== 5;
+  $('mode4-controls').hidden = mode !== 4;
+  document.querySelectorAll('[data-command]').forEach(button => { button.disabled = mode === 4; });
   const arrows = mode === 2 ? ['↖', '↘', '↙', '↗'] : mode === 5 ? ['↺', '↻', '◀', '▶'] : ['▲', '▼', '◀', '▶'];
   pad.querySelectorAll('.arrow').forEach((arrow, i) => { arrow.textContent = arrows[i]; });
 }
 $('mode1').addEventListener('click', () => selectMode(1));
 $('mode2').addEventListener('click', () => selectMode(2));
 $('mode5').addEventListener('click', () => selectMode(5));
+$('mode4').addEventListener('click', () => selectMode(4));
+$('line-start').addEventListener('click', () => {
+  if (!characteristic || closing || mode !== 4) { notice('请先连接蓝牙，再启动循迹。'); return; }
+  submit(LINE_START);
+  $('direction').textContent = '已请求启动（无回传）';
+});
 // 模式2和5按住运动，松开、触摸取消或失去捕获时发送刹车。
 document.querySelectorAll('[data-motion]').forEach(button => {
   button.addEventListener('pointerdown', event => {
-    if (mode === 1 || !characteristic || closing || motionPointer !== null) return;
+    if ((mode !== 2 && mode !== 5) || !characteristic || closing || motionPointer !== null) return;
     event.preventDefault();
     motionPointer = event.pointerId;
     button.setPointerCapture(event.pointerId);
